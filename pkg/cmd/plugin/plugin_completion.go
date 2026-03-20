@@ -44,7 +44,10 @@ func GetPluginCommandGroup(kubectl *cobra.Command) templates.CommandGroup {
 // plugin.  This is only done when performing shell completion that relate
 // to plugins.
 func SetupPluginCompletion(cmd *cobra.Command, args []string) {
-	kubectl := cmd.Root()
+	SetupPluginCompletionNonRoot(cmd.Root(), args)
+}
+
+func SetupPluginCompletionNonRoot(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		if strings.HasPrefix(args[0], "-") {
 			// Plugins are not supported if the first argument is a flag,
@@ -55,7 +58,7 @@ func SetupPluginCompletion(cmd *cobra.Command, args []string) {
 		if len(args) == 1 {
 			// We are completing a subcommand at the first level so
 			// we should include all plugins names.
-			registerPluginCommands(kubectl, true)
+			registerPluginCommands(cmd, true)
 			return
 		}
 
@@ -64,7 +67,7 @@ func SetupPluginCompletion(cmd *cobra.Command, args []string) {
 		// If we don't it could be a plugin and we'll need to add
 		// the plugin commands for completion to work.
 		found := false
-		for _, subCmd := range kubectl.Commands() {
+		for _, subCmd := range cmd.Commands() {
 			if args[0] == subCmd.Name() {
 				found = true
 				break
@@ -80,10 +83,10 @@ func SetupPluginCompletion(cmd *cobra.Command, args []string) {
 			// to avoid them being included in the completion choices.
 			// This must be done *before* adding the plugin commands so that
 			// when creating those plugin commands, the flags don't exist.
-			kubectl.ResetFlags()
+			cmd.ResetFlags()
 			cobra.CompDebugln("Cleared global flags for plugin completion", true)
 
-			registerPluginCommands(kubectl, true)
+			registerPluginCommands(cmd, true)
 		}
 	}
 }
